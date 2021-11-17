@@ -39,38 +39,56 @@ class Document():
                 #print("best phrase is: ",best_phrase)
                 verb=locate_type(clause,"VP")
                 answer=None
-                vp=None
-                q_lemma=set([word.lemma_ for word in q])
-                if(verb is None):
-                    for i,word in enumerate(best_sent):
-                        print(word,word.ent_iob_)
-                        if(word.ent_iob==3 and (word.lemma_ not in q_lemma)):
-                            end=i+1
-                            while(end<len(best_sent) and best_sent[end].ent_iob==1):
-                                end=end+1
-                            np=best_sent[i:end]
-                            answer=str(np)+" "+str(q[1:])
-                            break
-                    if(answer is None):
-                        for word in best_sent:
+                nounish= q[0].lemma_ in ("who")
+                if(nounish or verb is None or noun is None):
+                    answer=noun_strategy(q,best_sent)
+                    if answer is None:
+                        for word in sent:
                             if(word.lemma_=="be"):
                                 verb=word
-                if(answer is None and verb is not None):
-                    print("verb is: ",verb)
-                    bestscore=-1
-                    for i in range(len(best_sent)-len(verb)+1):
-                        score=verb.similarity(best_sent[i:i+len(verb)])
-                        if(score>bestscore):
-                            bestscore=score
-                            vp=containing_type(best_sent[i],"VP")
-                            answer=str(noun)+" "+str(vp)
+                                break
+                        answer=verb_strategy(q,best_sent,verb,noun)
+                else:
+                    answer=verb_strategy(q,best_sent,verb,noun)
+                    if answer is None:
+                        answer=noun_strategy(q,best_sent)
                 if answer is None:
                     print("error in finding answer")
                     return
-                print("VP is: " ,vp)
                 print("Answer is: ",answer)
                 return answer
 
+
+def noun_strategy(q,sent):
+    q_lemma=set([word.lemma_ for word in q])
+    for i,word in enumerate(sent):
+        if(word.ent_iob==3 and (word.lemma_ not in q_lemma)):
+            end=i+1
+            while(end<len(sent) and sent[end].ent_iob==1):
+                end=end+1
+            np=sent[i:end]
+            answer=str(np)+" "+str(q[1:])
+            return answer
+
+def verb_strategy(q,sent,verb,noun):
+    bestscore=-1
+    for i in range(len(sent)-len(verb)+1):
+        score=verb.similarity(sent[i:i+len(verb)])
+        if(score>bestscore):
+            bestscore=score
+            vp=containing_type(sent[i],"VP")
+    if vp is not None:
+        connector=" "
+        verb_list=("be","can")
+        if(vp[0].lemma_ not in verb_list):
+            pass 
+            for word in q:
+                #print(word.lemma_)
+                if word.lemma_ in verb_list:
+                    connector=" "+str(word)+" "  
+                    break   
+        answer=str(noun)+connector+str(vp)
+        return answer
 def phrase_score(phrase1,phrase2):
     child1=expand_children(phrase1)
     child2=expand_children(phrase2)
@@ -147,14 +165,18 @@ def load_file(path):
         return Document(text)
 
 answerer=load_file("../Course-Project-Data/set2/a5.txt")
-#answerer.answer("What is Delta Cancri also known as?")
-#answerer.answer("What is cancer bordered by?")
+answerer.answer("What is Delta Cancri also known as?")
+answerer.answer("What is cancer bordered by?")
 answerer.answer("What is the brightest star in Cancer?")
 answerer.answer("What is cancers astrological symbol?")
-#answerer.answer("What latitudes can cancer be seen at?")
+answerer.answer("What latitudes can cancer be seen at?")
 answerer.answer("What open cluster is located right in the centre of cancer?")
-#answerer.answer("What month was cancer associated with?")
-#answerer.answer("What did Heracles battle?")
+answerer.answer("What month was cancer associated with?")
+answerer.answer("Who followed cancer in ancient Greece?")
+answerer.answer("Who placed the crab among the stars?")
+answerer.answer("Who gave Castor immortality and why?")
+
+
 """
 s1="Cancer is a medium-sized constellation that is bordered by Gemini to the west, Lynx to the north, Leo Minor to the northeast, Leo to the east, Hydra to the south, and Canis Minor to the southwest."
 print(list(nlp(s1).sents)[0]._.parse_string)
