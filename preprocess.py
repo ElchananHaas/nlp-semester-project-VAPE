@@ -3,6 +3,8 @@ import spacy,benepar
 from spacy.matcher import Matcher
 nlp = spacy.load("en_core_web_lg")
 nlp.add_pipe('benepar', config={'model': 'benepar_en3'})
+from allennlp_models import pretrained
+predictor = pretrained.load_predictor('structured-prediction-srl-bert')
 
 class Document():
     def __init__(self,text):
@@ -12,51 +14,19 @@ class Document():
         print()
         q=nlp(question)
         #print(dir(q))
+        (best_sent,best_sentval)=(None,0)
         sent=list(q.sents)[0]
+        for qsent in self.doc.sents:
+            matchnum=phrase_score(qsent,sent)
+            if(matchnum>best_sentval):
+                #print(matchnum)
+                best_sentval=matchnum
+                best_sent=qsent
+        q=predictor.predict(question)
+        ans=predictor.predict(str(best_sent))
+        print(q)
+        print(ans)
         #print(sent._.parse_string)
-        if('SBARQ' in sent._.labels):
-            clause=None
-            for child in sent._.children:
-                if("SQ" in child._.labels):
-                    clause=child
-            (best_sent,best_phrase,best_sentval)=(None,None,0)
-            if clause is not None:
-                noun=None
-                for child in clause._.children:
-                    if("NP" in child._.labels):
-                        noun=child 
-                        break
-                for qsent in self.doc.sents:
-                    matchnum=phrase_score(qsent,sent)
-                    if(matchnum>best_sentval):
-                        #print(matchnum)
-                        best_sentval=matchnum
-                        best_sent=qsent
-                print("question is: ",question)
-                #print(clause._.parse_string)
-                print("best sentence is: ",best_sent)
-                #print(best_sent._.parse_string)
-                #print("best phrase is: ",best_phrase)
-                verb=locate_type(clause,"VP")
-                answer=None
-                nounish= q[0].lemma_ in ("who")
-                if(nounish or verb is None or noun is None):
-                    answer=noun_strategy(q,best_sent)
-                    if answer is None:
-                        for word in sent:
-                            if(word.lemma_=="be"):
-                                verb=word
-                                break
-                        answer=verb_strategy(q,best_sent,verb,noun)
-                else:
-                    answer=verb_strategy(q,best_sent,verb,noun)
-                    if answer is None:
-                        answer=noun_strategy(q,best_sent)
-                if answer is None:
-                    print("error in finding answer")
-                    return
-                print("Answer is: ",answer)
-                return answer
 
 
 def noun_strategy(q,sent):
@@ -130,34 +100,8 @@ def containing_type(phrase,type):
         return phrase 
     return containing_type(phrase._.parent,type)
 
-def find_nearest_np(phrase):
-    if phrase is None or phrase._.parent is None:
-        return None
-    siblings=list(phrase._.parent._.children)
-    if(len(siblings)==0):
-        return None
-    for sibling in siblings:
-        if (phrase.lemma_ != sibling.lemma_):
-            noun=locate_type(sibling,"NP")
-            if(noun is not None):
-                return sibling
-    return find_nearest_np(phrase._.parent)
 
-def locate_type(sent,type):
-    if(type in sent._.labels):
-        return sent 
-    for child in sent._.children:
-        located=locate_type(child,type)
-        if located is not None:
-            return located
 
-def match_subtree(sent,phrase):
-    if(sent.lemma_==phrase.lemma_):
-        return sent 
-    for child in sent._.children:
-        match=match_subtree(child,phrase)
-        if(match is not None):
-            return match
 
 def load_file(path):
     with open(path,'r') as f:
@@ -165,16 +109,16 @@ def load_file(path):
         return Document(text)
 
 answerer=load_file("../Course-Project-Data/set2/a5.txt")
-answerer.answer("What is Delta Cancri also known as?")
-answerer.answer("What is cancer bordered by?")
-answerer.answer("What is the brightest star in Cancer?")
+#answerer.answer("What is Delta Cancri also known as?")
+#answerer.answer("What is cancer bordered by?")
+#answerer.answer("What is the brightest star in Cancer?")
 answerer.answer("What is cancers astrological symbol?")
-answerer.answer("What latitudes can cancer be seen at?")
-answerer.answer("What open cluster is located right in the centre of cancer?")
-answerer.answer("What month was cancer associated with?")
-answerer.answer("Who followed cancer in ancient Greece?")
-answerer.answer("Who placed the crab among the stars?")
-answerer.answer("Who gave Castor immortality and why?")
+#answerer.answer("What latitudes can cancer be seen at?")
+#answerer.answer("What open cluster is located right in the centre of cancer?")
+#answerer.answer("What month was cancer associated with?")
+#answerer.answer("Who followed cancer in ancient Greece?")
+#answerer.answer("Who placed the crab among the stars?")
+#answerer.answer("Who gave Castor immortality and why?")
 
 
 """

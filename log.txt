@@ -1,0 +1,32 @@
+
+9 [ants, Ant
+
+
+
+Ants]
+9 [ants, 
+
+
+
+
+Ants, found]
+7 [ants, in, Ants]
+9 [ants, Leafcutter ants]
+9 [ants, Leafcutter ants]
+7 [ants, Ants]
+7 [ants, Ants]
+9 [ants, Crematogaster ants]
+7 [ants, in, 
+Ants]
+Q is:  Are ants found in Antartica?
+A is:  Ant
+
+
+
+Ants are social insects of the family Formicidae ( ), and along with the related wasps and bees, they belong to the order Hymenoptera.
+no overlap
+Ant
+
+
+
+Ants are social insects of the family Formicidae ( ), and along with the related wasps and bees, they belong to the order Hymenoptera.
